@@ -1,0 +1,14 @@
+{
+    "name": "odata-v4",
+    "private": true,
+    "version": "1.0.0",
+    "author": "TruongBT",
+    "description": "UI5 Demo App - OData V4",
+    "devDependencies": {
+        "@sapui5/ts-types": "^1.134.0",
+        "@ui5/cli": "^3.11.6"
+    },
+    "scripts": {
+        "start": "ui5 serve -o index.html"
+    }
+}
