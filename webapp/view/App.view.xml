@@ -3,6 +3,8 @@
     displayBlock="true"
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    core:require="{StringType: 'sap/ui/model/type/String'}"
 >
     <Shell>
         <App
@@ -16,10 +18,33 @@
                             id="peopleList"
                             growing="true"
                             growingThreshold="10"
-                            items="{
-								path: '/People'
-							}"
+                            items="{path: '/People', parameters: {$count: true}}"
                         >
+                            <headerToolbar>
+                                <OverflowToolbar>
+                                    <content>
+                                        <ToolbarSpacer />
+                                        <SearchField
+                                            id="searchField"
+                                            placeholder="{i18n>searchFieldPlaceholder}"
+                                            width="20%"
+                                            search=".onSearch"
+                                        />
+                                        <Button
+                                            id="refreshUsersButton"
+                                            icon="sap-icon://refresh"
+                                            tooltip="{i18n>refreshButtonText}"
+                                            press=".onRefresh"
+                                        />
+                                        <Button
+                                            id="sortUsersButton"
+                                            icon="sap-icon://sort"
+                                            tooltip="{i18n>sortButtonText}"
+                                            press=".onSort"
+                                        />
+                                    </content>
+                                </OverflowToolbar>
+                            </headerToolbar>
                             <columns>
                                 <Column id="userNameColumn">
                                     <Text text="{i18n>userNameLabelText}" />
@@ -40,7 +65,7 @@
                                         <Input value="{UserName}" />
                                     </cells>
                                     <cells>
-                                        <Input value="{FirstName}" />
+                                        <Input value="{path: 'FirstName', type: 'StringType'}" />
                                     </cells>
                                     <cells>
                                         <Input value="{LastName}" />

@@ -20,39 +20,34 @@ sap.ui.define([
 		 * the URL defined in variable sBaseUrl above.
 		 * @returns{Promise} a promise that is resolved when the mock server is started
 		 */
-		init : function () {
+		init: async () => {
 			// Read the mock data
-			return readData().then(function () {
-				// Initialize the sinon fake server
-				oSandbox.useFakeServer();
-				// Make sure that requests are responded to automatically. Otherwise we would need
-				// to do that manually.
-				oSandbox.server.autoRespond = true;
-
-				// Register the requests for which responses should be faked.
-				oSandbox.server.respondWith(rBaseUrl, handleAllRequests);
-
-				// Apply a filter to the fake XmlHttpRequest.
-				// Otherwise, ALL requests (e.g. for the component, views etc.) would be
-				// intercepted.
-				sinon.FakeXMLHttpRequest.useFilters = true;
-				sinon.FakeXMLHttpRequest.addFilter(function (_sMethod, sUrl) {
-					// If the filter returns true, the request will NOT be faked.
-					// We only want to fake requests that go to the intended service.
-					return !rBaseUrl.test(sUrl);
-				});
-
-				// Set the logging level for console entries from the mock server
-				Log.setLevel(3, sLogComponent);
-
-				Log.info("Running the app with mock data", sLogComponent);
+			await readData();
+			// Initialize the sinon fake server
+			oSandbox.useFakeServer();
+			// Make sure that requests are responded to automatically. Otherwise we would need
+			// to do that manually.
+			oSandbox.server.autoRespond = true;
+			// Register the requests for which responses should be faked.
+			oSandbox.server.respondWith(rBaseUrl, handleAllRequests);
+			// Apply a filter to the fake XmlHttpRequest.
+			// Otherwise, ALL requests (e.g. for the component, views etc.) would be
+			// intercepted.
+			sinon.FakeXMLHttpRequest.useFilters = true;
+			sinon.FakeXMLHttpRequest.addFilter(function (_sMethod, sUrl) {
+				// If the filter returns true, the request will NOT be faked.
+				// We only want to fake requests that go to the intended service.
+				return !rBaseUrl.test(sUrl);
 			});
+			// Set the logging level for console entries from the mock server
+			Log.setLevel(Log.Level.INFO, sLogComponent);
+			Log.info("Running the app with mock data", sLogComponent);
 		},
 
 		/**
 		 * Stops the request interception and deletes the Sinon fake server.
 		 */
-		stop : function () {
+		stop: function () {
 			sinon.FakeXMLHttpRequest.filters = [];
 			sinon.FakeXMLHttpRequest.useFilters = false;
 			oSandbox.restore();
@@ -132,20 +127,20 @@ sap.ui.define([
 	 */
 	function duplicateKeyError(sKey) {
 		return JSON.stringify({
-			error : {
-				code : "409",
-				message : "There is already a user with user name '" + sKey + "'.",
-				target : "UserName"
+			error: {
+				code: "409",
+				message: "There is already a user with user name '" + sKey + "'.",
+				target: "UserName"
 			}
 		});
 	}
 
 	function invalidKeyError(sKey) {
 		return JSON.stringify({
-			error : {
-				code : "404",
-				message : "There is no user with user name '" + sKey + "'.",
-				target : "UserName"
+			error: {
+				code: "404",
+				message: "There is no user with user name '" + sKey + "'.",
+				target: "UserName"
 			}
 		});
 	}
@@ -154,8 +149,8 @@ sap.ui.define([
 		return [
 			200,
 			{
-				"Content-Type" : "application/json; odata.metadata=minimal",
-				"OData-Version" : "4.0"
+				"Content-Type": "application/json; odata.metadata=minimal",
+				"OData-Version": "4.0"
 			},
 			sResponseBody
 		];
@@ -168,54 +163,53 @@ sap.ui.define([
 	 */
 	function readData() {
 		var oMetadataPromise = new Promise(function (fnResolve, fnReject) {
-				var sResourcePath = sap.ui.require.toUrl(sNamespace + "/localService/metadata.xml"),
-					oRequest = new XMLHttpRequest();
+			var sResourcePath = sap.ui.require.toUrl(sNamespace + "/localService/metadata.xml"),
+				oRequest = new XMLHttpRequest();
 
-				oRequest.onload = function () {
-					// 404 is not an error for XMLHttpRequest so we need to handle it here
-					if (oRequest.status === 404) {
-						var sError = "resource " + sResourcePath + " not found";
-
-						Log.error(sError, sLogComponent);
-						fnReject(new Error(sError, sLogComponent));
-					}
-					sMetadata = this.responseText;
-					fnResolve();
-				};
-				oRequest.onerror = function () {
-					var sError = "error loading resource '" + sResourcePath + "'";
+			oRequest.onload = function () {
+				// 404 is not an error for XMLHttpRequest so we need to handle it here
+				if (oRequest.status === 404) {
+					var sError = "resource " + sResourcePath + " not found";
 
 					Log.error(sError, sLogComponent);
 					fnReject(new Error(sError, sLogComponent));
-				};
-				oRequest.open("GET", sResourcePath);
-				oRequest.send();
-			}),
-			oMockDataPromise = new Promise(function (fnResolve, fnReject) {
-				var sResourcePath
-						= sap.ui.require.toUrl(sNamespace + "/localService/mockdata/people.json"),
-					oMockDataModel = new JSONModel(sResourcePath);
+				}
+				sMetadata = this.responseText;
+				fnResolve();
+			};
+			oRequest.onerror = function () {
+				var sError = "error loading resource '" + sResourcePath + "'";
 
-				oMockDataModel.attachRequestCompleted(function (oEvent) {
-					// 404 is not an error for JSONModel so we need to handle it here
-					if (oEvent.getParameter("errorobject")
-						&& oEvent.getParameter("errorobject").statusCode === 404) {
-						var sError = "resource '" + sResourcePath + "' not found";
+				Log.error(sError, sLogComponent);
+				fnReject(new Error(sError, sLogComponent));
+			};
+			oRequest.open("GET", sResourcePath);
+			oRequest.send();
+		});
+		var oMockDataPromise = new Promise(function (fnResolve, fnReject) {
+			var sResourcePath = sap.ui.require.toUrl(sNamespace + "/localService/mockdata/people.json"),
+				oMockDataModel = new JSONModel(sResourcePath);
 
-						Log.error(sError, sLogComponent);
-						fnReject(new Error(sError, sLogComponent));
-					}
-					aUsers = this.getData().value;
-					fnResolve();
-				});
-
-				oMockDataModel.attachRequestFailed(function () {
-					var sError = "error loading resource '" + sResourcePath + "'";
+			oMockDataModel.attachRequestCompleted(function (oEvent) {
+				// 404 is not an error for JSONModel so we need to handle it here
+				if (oEvent.getParameter("errorobject")
+					&& oEvent.getParameter("errorobject").statusCode === 404) {
+					var sError = "resource '" + sResourcePath + "' not found";
 
 					Log.error(sError, sLogComponent);
 					fnReject(new Error(sError, sLogComponent));
-				});
+				}
+				aUsers = this.getData().value;
+				fnResolve();
 			});
+
+			oMockDataModel.attachRequestFailed(function () {
+				var sError = "error loading resource '" + sResourcePath + "'";
+
+				Log.error(sError, sLogComponent);
+				fnReject(new Error(sError, sLogComponent));
+			});
+		});
 
 		return Promise.all([oMetadataPromise, oMockDataPromise]);
 	}
@@ -320,8 +314,8 @@ sap.ui.define([
 		return [
 			200,
 			{
-				"Content-Type" : "application/xml",
-				"odata-version" : "4.0"
+				"Content-Type": "application/xml",
+				"odata-version": "4.0"
 			}, sMetadata
 		];
 	}
@@ -389,7 +383,7 @@ sap.ui.define([
 
 			if (/People\(.+\)\/Friends/.test(oXhr.url)) {
 				// ownRequest for friends
-				oResponse = {value : []};
+				oResponse = { value: [] };
 				oResponse.value = createFriendsArray(aUsers[iIndex].Friends, aSelect);
 			} else {
 				// specific user was requested
@@ -404,7 +398,7 @@ sap.ui.define([
 			return [
 				400,
 				{
-					"Content-Type" : "application/json; charset=utf-8"
+					"Content-Type": "application/json; charset=utf-8"
 				},
 				sResponseBody
 			];
@@ -416,7 +410,7 @@ sap.ui.define([
 		aResult = applySkipTop(oXhr, aResult);
 
 		// generate sResponse
-		oResponse = {"@odata.count" : iCount, value : []};
+		oResponse = { "@odata.count": iCount, value: [] };
 
 		aResult.forEach(function (oUser) {
 			var iUserIndex = findUserIndex(oUser.UserName);
@@ -542,7 +536,7 @@ sap.ui.define([
 			return [
 				400,
 				{
-					"Content-Type" : "application/json; charset=utf-8"
+					"Content-Type": "application/json; charset=utf-8"
 				},
 				sResponseBody
 			];
@@ -560,7 +554,7 @@ sap.ui.define([
 		return [
 			204,
 			{
-				"OData-Version" : "4.0"
+				"OData-Version": "4.0"
 			},
 			sResponseBody
 		];
@@ -582,7 +576,7 @@ sap.ui.define([
 		return [
 			204,
 			{
-				"OData-Version" : "4.0"
+				"OData-Version": "4.0"
 			},
 			null
 		];
@@ -613,8 +607,8 @@ sap.ui.define([
 			return [
 				201,
 				{
-					"Content-Type" : "application/json; odata.metadata=minimal",
-					"OData-Version" : "4.0"
+					"Content-Type": "application/json; odata.metadata=minimal",
+					"OData-Version": "4.0"
 				},
 				sResponseBody
 			];
@@ -624,7 +618,7 @@ sap.ui.define([
 		return [
 			400,
 			{
-				"Content-Type" : "application/json; charset=utf-8"
+				"Content-Type": "application/json; charset=utf-8"
 			},
 			sResponseBody
 		];
@@ -642,7 +636,7 @@ sap.ui.define([
 		return [
 			204,
 			{
-				"OData-Version" : "4.0"
+				"OData-Version": "4.0"
 			},
 			null
 		];
@@ -738,9 +732,9 @@ sap.ui.define([
 			// looks for a request body at the end of the string, framed by two line breaks.
 			var aMatches0 = sPart.match(/(GET|DELETE|PATCH|POST) (\S+)(?:.|\r?\n)+\r?\n(.*)\r?\n$/),
 				aPartResponse = handleDirectRequest({
-					method : aMatches0[1],
-					url : getBaseUrl(oXhr.url) + aMatches0[2],
-					requestBody : aMatches0[3]
+					method: aMatches0[1],
+					url: getBaseUrl(oXhr.url) + aMatches0[2],
+					requestBody: aMatches0[3]
 				});
 
 			sResponseBody += sPartBoundary + "\r\n"
@@ -777,8 +771,8 @@ sap.ui.define([
 		aResponse = [
 			200,
 			{
-				"Content-Type" : "multipart/mixed;boundary=" + sOuterBoundary.slice(2),
-				"OData-Version" : "4.0"
+				"Content-Type": "multipart/mixed;boundary=" + sOuterBoundary.slice(2),
+				"OData-Version": "4.0"
 			},
 			sResponseBody
 		];
