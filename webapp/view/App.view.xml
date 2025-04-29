@@ -20,6 +20,7 @@
                             growingThreshold="10"
                             growingScrollToLoad="false"
                             items="{path: '/People', parameters: {$count: true, $$updateGroupId : 'peopleGroup'}}"
+                            mode="SingleSelectLeft"
                         >
                             <headerToolbar>
                                 <OverflowToolbar>
@@ -44,6 +45,12 @@
                                                 />
                                             </layoutData>
                                         </Button>
+                                        <Button
+                                            id="deleteUserButton"
+                                            icon="sap-icon://delete"
+                                            tooltip="{i18n>deleteButtonText}"
+                                            press=".onDelete"
+                                        />
                                         <Button
                                             id="refreshUsersButton"
                                             icon="sap-icon://refresh"

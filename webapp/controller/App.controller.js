@@ -18,7 +18,7 @@ sap.ui.define([
                 oModel = new JSONModel({
                     busy: false,
                     hasUIChanges: false,
-                    usernameEmpty: true,
+                    usernameEmpty: false,
                     order: 0
                 });
 
@@ -46,7 +46,7 @@ sap.ui.define([
             this._bTechnicalErrors = true;
             MessageBox.error(aMessages[0].message, {
                 id: "serviceErrorMessageBox",
-                onClose: function() {
+                onClose: function () {
                     bMessageOpen = false;
                 }
             });
@@ -146,13 +146,44 @@ sap.ui.define([
             }
         },
 
+        async onDelete() {
+            let oContext,
+                oSelected = this.byId("peopleList").getSelectedItem(),
+                sUserName;
+
+            if (!oSelected) {
+                return;
+            }
+
+            
+
+            oContext = oSelected.getBindingContext();
+            sUserName = oContext.getProperty("UserName");
+            
+            try {
+                oContext.delete()
+                await oContext.getModel().submitBatch('peopleGroup')
+                MessageToast.show(this._getText("deletionSuccessMessage", [sUserName]));
+            } catch (oError) {
+                this._setUIChanges();
+                if (oError.canceled) {
+                    MessageToast.show(this._getText("deletionRestoredMessage", [sUserName]));
+                    return;
+                }
+
+                MessageBox.error(oError.message + ": " + sUserName);
+            }
+
+            this._setUIChanges(true);
+        },
+
         /**
          * Get text from i18n model
          * @param {string} sTextId - The text ID in i18n
          * @param {string[]} [aArgs] - Optional arguments for placeholders
          * @returns {string} The translated text
          */
-        _getText(sTextId, aArgs = []) {
+        _getText(sTextId, aArgs) {
             return this.getOwnerComponent().getModel('i18n').getResourceBundle().getText(sTextId, aArgs);
         },
 
