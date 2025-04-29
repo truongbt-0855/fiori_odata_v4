@@ -155,11 +155,11 @@ sap.ui.define([
                 return;
             }
 
-            
+
 
             oContext = oSelected.getBindingContext();
             sUserName = oContext.getProperty("UserName");
-            
+
             try {
                 oContext.delete()
                 await oContext.getModel().submitBatch('peopleGroup')
@@ -175,6 +175,19 @@ sap.ui.define([
             }
 
             this._setUIChanges(true);
+        },
+
+        async onResetDataSource() {
+            let oModel = this.getView().getModel(),
+                oOperation = oModel.bindContext("/ResetDataSource(...)");
+
+            try {
+                await oOperation.invoke()
+                await oModel.refresh();
+                MessageToast.show(this._getText("sourceResetSuccessMessage"));
+            } catch (oError) {
+                MessageBox.error(oError.message);
+            }
         },
 
         /**
