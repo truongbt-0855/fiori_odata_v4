@@ -155,8 +155,6 @@ sap.ui.define([
                 return;
             }
 
-
-
             oContext = oSelected.getBindingContext();
             sUserName = oContext.getProperty("UserName");
 
@@ -190,6 +188,10 @@ sap.ui.define([
             }
         },
 
+        onSelectionChange(oEvent) {
+            this._setDetailArea(oEvent.getParameter("listItem").getBindingContext());
+        },
+
         /**
          * Get text from i18n model
          * @param {string} sTextId - The text ID in i18n
@@ -215,6 +217,27 @@ sap.ui.define([
         _setBusy(bIsBusy) {
             let oModel = this.getView().getModel("appView");
             oModel.setProperty("/busy", bIsBusy);
-        }
+        },
+
+        /**
+         * Toggles the visibility of the detail area
+         *
+         * @param {object} [oUserContext] - the current user context
+         */
+        _setDetailArea(oUserContext) {
+            console.log(oUserContext);
+            
+            let oDetailArea = this.byId("detailArea"),
+                oLayout = this.byId("defaultLayout"),
+                oSearchField = this.byId("searchField");
+
+            oDetailArea.setBindingContext(oUserContext || null);
+
+            // resize view
+            oDetailArea.setVisible(!!oUserContext);
+            oLayout.setSize(oUserContext ? "60%" : "100%");
+            oLayout.setResizable(!!oUserContext);
+            oSearchField.setWidth(oUserContext ? "40%" : "20%");
+        },
     })
 });
